@@ -1,7 +1,7 @@
 import {ClientError} from "../exceptions/index.js";
 import response from "../utils/response.js";
 
-const ErrorHandler = (err, req, res) => {
+const ErrorHandler = (err, req, res, next) => {
     if(err instanceof ClientError) {
         return response(res, err.statusCode, err.message, null);
     }

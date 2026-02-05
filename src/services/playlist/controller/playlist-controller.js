@@ -8,17 +8,17 @@ export const createPlaylist = async (req, res, next) => {
     const { name } = req.body;
     const {id: owner} = req.user;
 
-    const playlist = await playlistRepositories.createPlaylist({name, owner})
+    const playlist = await playlistRepositories.createPlaylist({name, ownerId: owner})
 
     if(!playlist) return next(new InvariantError('Gagal membuat playlist'));
 
-    return response(res, 201, 'Playlist berhasil dibuat', playlist)
+    return response(res, 201, 'Playlist berhasil dibuat', {playlistId: playlist.id})
 };
 
 export const findPlaylist = async (req, res, next) => {
     const playlist = await playlistRepositories.findPlaylists();
     if(!playlist) return next(new NotFoundError('Playlist tidak ditemukan'));
-    return response(res, 200, 'Playlist ditemukan', playlist);
+    return response(res, 200, 'Playlist ditemukan', {playlists: playlist});
 };
 
 export const deletePlaylist = async (req, res, next) => {

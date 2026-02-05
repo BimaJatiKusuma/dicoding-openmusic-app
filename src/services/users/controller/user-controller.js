@@ -21,5 +21,5 @@ export const createUser = async (req, res, next) => {
         return next(new NotFoundError('User gagal ditambahkan'));
     }
 
-    return response(res, 201, 'User berhasil ditambahkan', user);
+    return response(res, 201, 'User berhasil ditambahkan', {userId: user.id});
 }

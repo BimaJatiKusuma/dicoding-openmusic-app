@@ -21,7 +21,9 @@ class PlaylistRepositories {
 
     async findPlaylists(){
         const query = {
-            text: 'SELECT * FROM playlist'
+            text: `SELECT playlist.id, playlist.name, users.username
+            FROM playlist
+            LEFT JOIN users ON playlist.owner = users.id`
         }
 
         const result = await this.pool.query(query);
@@ -57,7 +59,10 @@ class PlaylistRepositories {
 
     async findSongsInPlaylist(id){
         const query = {
-            text: 'SELECT id, name, owner FROM playlist.p JOIN  WHERE id = $1',
+            text: `SELECT playlist.id, playlist.name, users.username
+                    FROM playlist
+                    LEFT JOIN users ON playlist.owner = users.id
+                    WHERE playlist.id = $1`,
             values: [id]
         }
 
@@ -80,7 +85,7 @@ class PlaylistRepositories {
         return {
             id: playlist.id,
             name: playlist.name,
-            owner: playlist.owner,
+            owner: playlist.username,
             songs: resultSongs.rows
         };
     };
@@ -100,7 +105,7 @@ class PlaylistRepositories {
 
     async verifyPlaylistOwner(playlistId, userId){
         const query = {
-            text: 'SELECT * FROM notes WHERE id = $1',
+            text: 'SELECT * FROM playlist WHERE id = $1',
             values: [playlistId]
         }
 

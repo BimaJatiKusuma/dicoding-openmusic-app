@@ -27,6 +27,15 @@ class AuthenticationRepositories {
 
         return result.rows[0];
     }
+
+    async deleteRefreshToken(token) {
+        const query = {
+            text: 'DELETE FROM authentications WHERE token = $1',
+            values: [token]
+        }
+
+        await this.pool.query(query);
+    }
 }
 
 export default new AuthenticationRepositories();
