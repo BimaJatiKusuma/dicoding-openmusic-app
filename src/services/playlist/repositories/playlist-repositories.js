@@ -19,11 +19,13 @@ class PlaylistRepositories {
         return result.rows[0];
     };
 
-    async findPlaylists(){
+    async findPlaylists(owner){
         const query = {
             text: `SELECT playlist.id, playlist.name, users.username
             FROM playlist
-            LEFT JOIN users ON playlist.owner = users.id`
+            LEFT JOIN users ON playlist.owner = users.id
+            WHERE playlist.owner = $1`,
+            values: [owner]
         }
 
         const result = await this.pool.query(query);
@@ -47,9 +49,10 @@ class PlaylistRepositories {
 
     async addSongToPlaylist(playlistId, songId){
         const id = nanoid(16);
+
         const query = {
             text: 'INSERT INTO playlist_songs(id, playlist_id, song_id) VALUES ($1, $2, $3)',
-            value: [id, playlistId, songId]
+            values: [id, playlistId, songId]
         }
 
         const result = await this.pool.query(query);
@@ -73,7 +76,7 @@ class PlaylistRepositories {
         }
 
         const querySongs = {
-            text: 'SELECT songs.id, songs.title, songs.performer, songs.genre, songs.duration, songs.album' +
+            text: 'SELECT songs.id, songs.title, songs.performer, songs.genre, songs.duration, songs.album_id' +
                 'FROM songs JOIN playlist_songs ON songs.id = playlist_songs.song_id WHERE playlist_songs.playlist_id = $1',
             values: [id]
         }
@@ -85,7 +88,7 @@ class PlaylistRepositories {
         return {
             id: playlist.id,
             name: playlist.name,
-            owner: playlist.username,
+            username: playlist.username,
             songs: resultSongs.rows
         };
     };
@@ -101,6 +104,8 @@ class PlaylistRepositories {
         if (result.rowCount === 0) {
             return null;
         }
+
+        return result.rows[0];
     };
 
     async verifyPlaylistOwner(playlistId, userId){
