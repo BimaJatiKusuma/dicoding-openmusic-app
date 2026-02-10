@@ -3,6 +3,7 @@ import playlistRepositories from '../repositories/playlist-repositories.js';
 import InvariantError from '../../../exceptions/invariant-error.js';
 import NotFoundError from '../../../exceptions/not-found-error.js';
 import AuthorizationError from "../../../exceptions/authorization-error.js";
+import openmusicRepositories from "../../openmusic/repositories/openmusic-repositories.js";
 
 export const createPlaylist = async (req, res, next) => {
     const { name } = req.body;
@@ -39,18 +40,35 @@ export const deletePlaylist = async (req, res, next) => {
 export const addSongInPlaylist = async (req, res, next) => {
     const { songId } = req.body;
     const { id: playlistId} = req.params;
+    const { id: credentialId } = req.user;
 
-    const result = await playlistRepositories.addSongToPlaylist(playlistId, songId);
-    if(!result) return next(new InvariantError('Gagal menambahkan song ke playlist'));
-    return response(res, 201, 'Song berhasil ditambahkan ke playlist', result)
+    try {
+        const isOwner = await playlistRepositories.verifyPlaylistOwner(playlistId, credentialId);
+        if (isOwner === null) return next(new NotFoundError('Playlist tidak ditemukan'));
+        if (isOwner === false) return next(new AuthorizationError('Anda tidak berhak mengakses resource ini'));
+
+        const song = await openmusicRepositories.findSongById(songId);
+        if(!song) return next(new NotFoundError('Lagu tidak ditemukan'));
+
+        const result = await playlistRepositories.addSongToPlaylist(playlistId, songId);
+        if(!result) return next(new InvariantError('Gagal menambahkan song ke playlist'));
+        return response(res, 201, 'Song berhasil ditambahkan ke playlist', result)
+    } catch (error) {
+        return next(error);
+    }
+
+    // const result = await playlistRepositories.addSongToPlaylist(playlistId, songId);
+    // if(!result) return next(new InvariantError('Gagal menambahkan song ke playlist'));
+    // return response(res, 201, 'Song berhasil ditambahkan ke playlist', result)
 };
 
 export const findSongsInPlaylist = async (req, res, next) => {
     const { id: playlistId} = req.params;
-    const songs = await playlistRepositories.findSongsInPlaylist(playlistId);
-    if(!songs) return next(new NotFoundError('Song tidak ditemukan'));
-    return response(res, 200, 'Song ditemukan', {songs});
+    const playlist = await playlistRepositories.findSongsInPlaylist(playlistId);
+    if(!playlist) return next(new NotFoundError('Playlist tidak ditemukan'));
+    return response(res, 200, 'Playlist ditemukan', {playlist});
 };
+
 export const deleteSongInPlaylist = async (req, res, next) => {
     const { id: playlistId} = req.params;
     const { songId } = req.body;

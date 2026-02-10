@@ -51,7 +51,7 @@ class PlaylistRepositories {
         const id = nanoid(16);
 
         const query = {
-            text: 'INSERT INTO playlist_songs(id, playlist_id, song_id) VALUES ($1, $2, $3)',
+            text: 'INSERT INTO playlist_songs(id, playlist_id, song_id) VALUES ($1, $2, $3) RETURNING id',
             values: [id, playlistId, songId]
         }
 
@@ -62,10 +62,10 @@ class PlaylistRepositories {
 
     async findSongsInPlaylist(id){
         const query = {
-            text: `SELECT playlist.id, playlist.name, users.username
-                    FROM playlist
-                    LEFT JOIN users ON playlist.owner = users.id
-                    WHERE playlist.id = $1`,
+            // PERBAIKAN 1: Hapus genre, duration, dan album_id. Ambil id, title, performer saja.
+            // PERBAIKAN 2: Tambahkan spasi sebelum FROM.
+            text: 'SELECT songs.id, songs.title, songs.performer ' +
+                'FROM songs JOIN playlist_songs ON songs.id = playlist_songs.song_id WHERE playlist_songs.playlist_id = $1',
             values: [id]
         }
 
@@ -76,7 +76,7 @@ class PlaylistRepositories {
         }
 
         const querySongs = {
-            text: 'SELECT songs.id, songs.title, songs.performer, songs.genre, songs.duration, songs.album_id' +
+            text: 'SELECT songs.id, songs.title, songs.performer, songs.genre, songs.duration, songs.album_id ' +
                 'FROM songs JOIN playlist_songs ON songs.id = playlist_songs.song_id WHERE playlist_songs.playlist_id = $1',
             values: [id]
         }
