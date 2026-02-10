@@ -47,7 +47,7 @@ class PlaylistRepositories {
         return result.rows[0];
     };
 
-    async addSongToPlaylist(playlistId, songId){
+    async addSongToPlaylist(playlistId, songId, userId){
         const id = nanoid(16);
 
         const query = {
@@ -56,16 +56,21 @@ class PlaylistRepositories {
         }
 
         const result = await this.pool.query(query);
-
+        const queryActivities = {
+            text: 'INSERT INTO playlist_song_activities(id, playlist_id, song_id, user_id, action, time) ' +
+                'VALUES ($1, $2, $3, $4, NOW()) RETURNING id',
+            values: [id, playlistId, songId, userId, 'add']
+        }
+        const resultQueryActivities = await this.pool.query(queryActivities);
+        if (resultQueryActivities.rowCount === 0) return null;
         return result.rows[0];
     };
 
     async findSongsInPlaylist(id){
         const query = {
-            // PERBAIKAN 1: Hapus genre, duration, dan album_id. Ambil id, title, performer saja.
-            // PERBAIKAN 2: Tambahkan spasi sebelum FROM.
-            text: 'SELECT songs.id, songs.title, songs.performer ' +
-                'FROM songs JOIN playlist_songs ON songs.id = playlist_songs.song_id WHERE playlist_songs.playlist_id = $1',
+            text: 'SELECT playlist.id, playlist.name, users.username ' +
+                'FROM playlist LEFT JOIN users ON playlist.owner = users.id ' +
+                'WHERE playlist.id = $1',
             values: [id]
         }
 
@@ -76,7 +81,7 @@ class PlaylistRepositories {
         }
 
         const querySongs = {
-            text: 'SELECT songs.id, songs.title, songs.performer, songs.genre, songs.duration, songs.album_id ' +
+            text: 'SELECT songs.id, songs.title, songs.performer ' +
                 'FROM songs JOIN playlist_songs ON songs.id = playlist_songs.song_id WHERE playlist_songs.playlist_id = $1',
             values: [id]
         }
@@ -93,7 +98,9 @@ class PlaylistRepositories {
         };
     };
 
-    async deleteSongInPlaylist(playlistId, songId){
+    async deleteSongInPlaylist(playlistId, songId, userId){
+        const id = nanoid(16);
+
         const query = {
             text: 'DELETE FROM playlist_songs WHERE playlist_id = $1 AND song_id = $2 RETURNING id',
             values: [playlistId, songId]
@@ -104,6 +111,15 @@ class PlaylistRepositories {
         if (result.rowCount === 0) {
             return null;
         }
+
+        const queryActivities = {
+            text: 'INSERT INTO playlist_song_activities(id, playlist_id, song_id, user_id, action, time) ' +
+                'VALUES ($1, $2, $3, $4, NOW()) RETURNING id',
+            values: [id, playlistId, songId, userId, 'delete']
+        }
+
+        const resultQueryActivities = await this.pool.query(queryActivities);
+        if (resultQueryActivities.rowCount === 0) return null;
 
         return result.rows[0];
     };
@@ -123,6 +139,17 @@ class PlaylistRepositories {
         if (playlist.owner !== userId) return false;
 
         return true
+    }
+
+    async findPlaylistActivities(playlistId){
+        const query = {
+            text: 'SELECT users.username, songs.title, playlist_song_activities.action, playlist_song_activities.time ' +
+            'FROM playlist_song_activities JOIN users ON playlist_song_activities.user_id = users.id JOIN songs ON playlist_song_activities.song_id = songs.id ' +
+            'WHERE playlist_song_activities.playlist_id = $1 ORDER BY playlist_song_activities.time DESC',
+            values: [playlistId]
+        }
+        const result = await this.pool.query(query);
+        return result.rows;
     }
 }
 

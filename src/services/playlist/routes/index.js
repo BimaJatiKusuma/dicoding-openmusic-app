@@ -6,6 +6,7 @@ import {
     addSongInPlaylist,
     findSongsInPlaylist,
     deleteSongInPlaylist,
+    findActivitiesPlaylist,
 } from "../controller/playlist-controller.js";
 import validate from "../../../middlewares/validate.js";
 import authenticateToken from "../../../middlewares/auth.js";
@@ -23,5 +24,6 @@ router.delete('/:id', authenticateToken, deletePlaylist);
 router.post('/:id/songs', authenticateToken, validate(playlistAddSongPayloadSchema), addSongInPlaylist);
 router.get('/:id/songs', authenticateToken, findSongsInPlaylist);
 router.delete('/:id/songs', authenticateToken, validate(playlistDeleteSongPayloadSchema), deleteSongInPlaylist);
+router.get('/:id/activities', authenticateToken, findActivitiesPlaylist)
 
 export default router;
