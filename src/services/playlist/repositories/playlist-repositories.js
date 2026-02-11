@@ -58,7 +58,7 @@ class PlaylistRepositories {
         const result = await this.pool.query(query);
         const queryActivities = {
             text: 'INSERT INTO playlist_song_activities(id, playlist_id, song_id, user_id, action, time) ' +
-                'VALUES ($1, $2, $3, $4, NOW()) RETURNING id',
+                'VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id',
             values: [id, playlistId, songId, userId, 'add']
         }
         const resultQueryActivities = await this.pool.query(queryActivities);

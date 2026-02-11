@@ -9,7 +9,7 @@ class CollaboratorRepositories {
     async createCollaboration(playlistId, userId) {
         const id = nanoid(16);
         const query = {
-            text: 'INSERT INTO collaborators VALUES ($1, $2, $3) RETURNING id',
+            text: 'INSERT INTO collaborations VALUES ($1, $2, $3) RETURNING id',
             values: [id, playlistId, userId]
         };
 
@@ -20,7 +20,7 @@ class CollaboratorRepositories {
 
     async deleteCollaboration(playlistId, userId) {
         const query = {
-            text: 'DELETE FROM collaborators WHERE playlist_id = $1 AND user_id = $2',
+            text: 'DELETE FROM collaborations WHERE playlist_id = $1 AND user_id = $2',
             values: [playlistId, userId]
         };
 

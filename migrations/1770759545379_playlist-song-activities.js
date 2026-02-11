@@ -25,4 +25,6 @@ export const up = (pgm) => {
     })
 };
 
-export const down = (pgm) => {};
+export const down = (pgm) => {
+    pgm.dropTable('playlist_song_activities');
+};

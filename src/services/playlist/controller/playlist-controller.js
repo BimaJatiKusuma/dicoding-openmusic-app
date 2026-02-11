@@ -99,8 +99,10 @@ export const deleteSongInPlaylist = async (req, res, next) => {
 export const findActivitiesPlaylist = async (req, res, next) => {
     const { id: playlistId} = req.params;
     const result = await playlistRepositories.findPlaylistActivities(playlistId);
+    console.log(result);
+    if(!result) return next(new NotFoundError('Playlist tidak ditemukan'));
 
-    return response(res, 200, 'Masih dalam pengembangan', {
+    return response(res, 200, 'success', {
         playlistId: playlistId,
         activities: result
     });
