@@ -33,6 +33,12 @@ class PlaylistRepositories {
     };
 
     async deletePlaylist(id){
+        const queryDeleteActivities = {
+            text: 'DELETE FROM playlist_song_activities WHERE playlist_id = $1',
+            values: [id]
+        };
+        await this.pool.query(queryDeleteActivities);
+
         const query = {
             text: 'DELETE FROM playlist WHERE id = $1 RETURNING id',
             values: [id]
@@ -114,7 +120,7 @@ class PlaylistRepositories {
 
         const queryActivities = {
             text: 'INSERT INTO playlist_song_activities(id, playlist_id, song_id, user_id, action, time) ' +
-                'VALUES ($1, $2, $3, $4, NOW()) RETURNING id',
+                'VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id',
             values: [id, playlistId, songId, userId, 'delete']
         }
 
@@ -145,7 +151,7 @@ class PlaylistRepositories {
         const query = {
             text: 'SELECT users.username, songs.title, playlist_song_activities.action, playlist_song_activities.time ' +
             'FROM playlist_song_activities JOIN users ON playlist_song_activities.user_id = users.id JOIN songs ON playlist_song_activities.song_id = songs.id ' +
-            'WHERE playlist_song_activities.playlist_id = $1 ORDER BY playlist_song_activities.time DESC',
+            'WHERE playlist_song_activities.playlist_id = $1 ORDER BY playlist_song_activities.time ASC',
             values: [playlistId]
         }
         const result = await this.pool.query(query);

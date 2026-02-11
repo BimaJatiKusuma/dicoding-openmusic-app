@@ -88,7 +88,7 @@ export const deleteSongInPlaylist = async (req, res, next) => {
         if (isOwner === null) return next(new NotFoundError('Playlist tidak ditemukan'));
         if (isOwner === false) return next(new AuthorizationError('Anda tidak berhak mengakses resource ini'));
 
-        const result = await playlistRepositories.deleteSongInPlaylist(playlistId, songId);
+        const result = await playlistRepositories.deleteSongInPlaylist(playlistId, songId, credentialId);
         if(!result) return next(new NotFoundError('Song tidak ditemukan'));
         return response(res, 200, 'Song berhasil dihapus');
     } catch (error) {
@@ -98,12 +98,20 @@ export const deleteSongInPlaylist = async (req, res, next) => {
 
 export const findActivitiesPlaylist = async (req, res, next) => {
     const { id: playlistId} = req.params;
-    const result = await playlistRepositories.findPlaylistActivities(playlistId);
-    console.log(result);
-    if(!result) return next(new NotFoundError('Playlist tidak ditemukan'));
+    const { id: credentialId } = req.user;
+    try {
+        const isOwner = await playlistRepositories.verifyPlaylistOwner(playlistId, credentialId);
+        if (isOwner === null) return next(new NotFoundError('Playlist tidak ditemukan'));
+        const result = await playlistRepositories.findPlaylistActivities(playlistId);
 
-    return response(res, 200, 'success', {
-        playlistId: playlistId,
-        activities: result
-    });
+        if (isOwner === false) return next(new AuthorizationError('Anda tidak berhak mengakses resource ini'));
+
+        return response(res, 200, 'success', {
+            playlistId: playlistId,
+            activities: result
+        });
+    } catch (error) {
+        next(error);
+    }
+
 }
