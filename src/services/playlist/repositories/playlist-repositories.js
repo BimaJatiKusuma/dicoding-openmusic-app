@@ -1,5 +1,7 @@
 import { nanoid } from "nanoid";
 import { Pool } from 'pg';
+import AuthorizationError from "../../../exceptions/authorization-error.js";
+import {NotFoundError} from "../../../exceptions/index.js";
 
 class PlaylistRepositories {
     constructor() {

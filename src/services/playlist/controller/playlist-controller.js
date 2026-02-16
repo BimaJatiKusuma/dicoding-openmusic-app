@@ -43,8 +43,7 @@ export const addSongInPlaylist = async (req, res, next) => {
     const { id: credentialId } = req.user;
 
     try {
-        await playlistRepositories.verifyPlaylistOwner(playlistId, credentialId);
-
+        await playlistRepositories.verifyPlaylistAccess(playlistId, credentialId);
         const song = await openmusicRepositories.findSongById(songId);
         if(!song) return next(new NotFoundError('Lagu tidak ditemukan'));
 
@@ -55,9 +54,6 @@ export const addSongInPlaylist = async (req, res, next) => {
         return next(error);
     }
 
-    // const result = await playlistRepositories.addSongToPlaylist(playlistId, songId);
-    // if(!result) return next(new InvariantError('Gagal menambahkan song ke playlist'));
-    // return response(res, 201, 'Song berhasil ditambahkan ke playlist', result)
 };
 
 export const findSongsInPlaylist = async (req, res, next) => {

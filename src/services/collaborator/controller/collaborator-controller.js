@@ -30,10 +30,21 @@ export const createCollaboration = async (req, res, next) => {
 
 export const deleteCollaboration = async (req, res, next) => {
     const {playlistId, userId} = req.body;
+    const {id: credentialId} = req.user;
 
-    const collaboration = await collaboratorRepositories.deleteCollaboration(playlistId, userId);
+    try {
+        const isOwner = await playlistRepositories.verifyPlaylistOwner(playlistId, credentialId);
+        if(isOwner === null) return next(new NotFoundError("Playlist tidak ditemukan"));
+        if(isOwner === false) return next(new AuthorizationError("Anda tidak berhak mengakses resource ini"));
 
-    if(collaboration === null) return next(new InvariantError("Kolaborasi tidak ditemukan"))
+        const collaboration = await collaboratorRepositories.deleteCollaboration(playlistId, userId);
 
-    return response(res, 200, 'Berhasil menghapus kolaborasi', collaboration);
+        if(collaboration === null) return next(new InvariantError("Kolaborasi tidak ditemukan"))
+
+        return response(res, 200, 'Berhasil menghapus kolaborasi', collaboration);
+    } catch (error) {
+        return next(error);
+    }
+
+
 };
