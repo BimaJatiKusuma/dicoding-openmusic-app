@@ -8,7 +8,8 @@
     "start": "nodemon ./src/server.js",
     "migrate": "node-pg-migrate",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "author": "",
   "license": "ISC",
@@ -26,8 +27,9 @@
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "eslint": "^9.39.2",
+    "eslint-config-dicodingacademy": "^0.9.5",
     "eslint-config-google": "^0.14.0",
-    "globals": "^17.0.0",
+    "globals": "^17.3.0",
     "nodemon": "^3.1.11"
   }
 }

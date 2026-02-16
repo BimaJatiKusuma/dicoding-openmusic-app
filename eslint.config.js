@@ -1,9 +1,18 @@
-import globals from 'globals';
-import pluginJs from '@eslint/js';
-
+import js from '@eslint/js';
+import google from 'eslint-config-google';
 
 export default [
-    { files: ['**/*.js'], languageOptions: { sourceType: 'module' } },
-    { languageOptions: { globals: globals.node } },
-    pluginJs.configs.recommended,
+  js.configs.recommended,
+
+  {
+    ...google,
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'commonjs'
+    },
+    rules: {
+      'max-len': ['error', { code: 120 }],
+      'require-jsdoc': 'off'
+    }
+  }
 ];
