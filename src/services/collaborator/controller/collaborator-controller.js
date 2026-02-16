@@ -11,7 +11,7 @@ export const createCollaboration = async (req, res, next) => {
     const {id: credentialId} = req.user;
 
     try {
-        const isOwner = await playlistRepositories.verifyPlaylistOwner(playlistId, userId);
+        const isOwner = await playlistRepositories.verifyPlaylistOwner(playlistId, credentialId);
         if(isOwner === null) return next(new NotFoundError("Playlist tidak ditemukan"));
         if(isOwner === false) return next(new AuthorizationError("Anda tidak berhak mengakses resource ini"));
 

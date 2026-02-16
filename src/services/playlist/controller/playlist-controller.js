@@ -43,9 +43,7 @@ export const addSongInPlaylist = async (req, res, next) => {
     const { id: credentialId } = req.user;
 
     try {
-        const isOwner = await playlistRepositories.verifyPlaylistOwner(playlistId, credentialId);
-        if (isOwner === null) return next(new NotFoundError('Playlist tidak ditemukan'));
-        if (isOwner === false) return next(new AuthorizationError('Anda tidak berhak mengakses resource ini'));
+        await playlistRepositories.verifyPlaylistOwner(playlistId, credentialId);
 
         const song = await openmusicRepositories.findSongById(songId);
         if(!song) return next(new NotFoundError('Lagu tidak ditemukan'));
@@ -66,9 +64,7 @@ export const findSongsInPlaylist = async (req, res, next) => {
     const { id: playlistId} = req.params;
     const { id: credentialId } = req.user;
     try {
-        const isOwner = await playlistRepositories.verifyPlaylistOwner(playlistId, credentialId);
-        if (isOwner === null) return next(new NotFoundError('Playlist tidak ditemukan'));
-        if (isOwner === false) return next(new AuthorizationError('Anda tidak berhak mengakses resource ini'));
+        await playlistRepositories.verifyPlaylistAccess(playlistId, credentialId);
 
         const playlist = await playlistRepositories.findSongsInPlaylist(playlistId);
         if(!playlist) return next(new NotFoundError('Playlist tidak ditemukan'));
@@ -84,9 +80,7 @@ export const deleteSongInPlaylist = async (req, res, next) => {
     const { songId } = req.body;
     const { id: credentialId } = req.user;
     try {
-        const isOwner = await playlistRepositories.verifyPlaylistOwner(playlistId, credentialId);
-        if (isOwner === null) return next(new NotFoundError('Playlist tidak ditemukan'));
-        if (isOwner === false) return next(new AuthorizationError('Anda tidak berhak mengakses resource ini'));
+        await playlistRepositories.verifyPlaylistAccess(playlistId, credentialId);
 
         const result = await playlistRepositories.deleteSongInPlaylist(playlistId, songId, credentialId);
         if(!result) return next(new NotFoundError('Song tidak ditemukan'));
@@ -100,9 +94,7 @@ export const findActivitiesPlaylist = async (req, res, next) => {
     const { id: playlistId} = req.params;
     const { id: credentialId } = req.user;
     try {
-        const isOwner = await playlistRepositories.verifyPlaylistOwner(playlistId, credentialId);
-        if (isOwner === null) return next(new NotFoundError('Playlist tidak ditemukan'));
-        const result = await playlistRepositories.findPlaylistActivities(playlistId);
+        await playlistRepositories.verifyPlaylistAccess(playlistId, credentialId);
 
         if (isOwner === false) return next(new AuthorizationError('Anda tidak berhak mengakses resource ini'));
 
@@ -113,5 +105,6 @@ export const findActivitiesPlaylist = async (req, res, next) => {
     } catch (error) {
         next(error);
     }
+
 
 }
