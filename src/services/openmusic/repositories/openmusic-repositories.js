@@ -22,7 +22,8 @@ class OpenMusicRepositories {
 
     async findAlbumById(id) {
         const query = {
-            text: 'SELECT a.id, a.name, a.year, s.id as song_id, s.title, s.performer FROM albums a LEFT JOIN songs s ON s.album_id = a.id WHERE a.id = $1',
+            text: 'SELECT a.id, a.name, a.year, s.id as song_id, s.title, s.performer ' +
+                'FROM albums a LEFT JOIN songs s ON s.album_id = a.id WHERE a.id = $1',
             values: [id]
         };
 
@@ -81,7 +82,8 @@ class OpenMusicRepositories {
     async createSong({albumId, title, year, genre, performer, duration}) {
         const id = nanoid();
         const query = {
-            text: 'INSERT INTO songs (id, album_id, title, year, genre, performer, duration) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+            text: 'INSERT INTO songs (id, album_id, title, year, genre, performer, duration) ' +
+                'VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
             values: [id, albumId, title, year, genre, performer, duration]
         };
 
@@ -127,7 +129,8 @@ class OpenMusicRepositories {
 
     async updateSong({id, album_id, title, year, genre, performer, duration}) {
         const query = {
-            text: 'UPDATE songs SET album_id = $1, title = $2, year = $3, genre = $4, performer = $5, duration = $6 WHERE id = $7 RETURNING *',
+            text: 'UPDATE songs SET album_id = $1, title = $2, year = $3, genre = $4, performer = $5, duration = $6 ' +
+                'WHERE id = $7 RETURNING *',
             values: [album_id, title, year, genre, performer, duration, id]
         }
 

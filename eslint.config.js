@@ -1,5 +1,6 @@
 import js from '@eslint/js';
 import google from 'eslint-config-google';
+import globals from 'globals';
 
 export default [
   js.configs.recommended,
@@ -8,7 +9,10 @@ export default [
     ...google,
     languageOptions: {
       ecmaVersion: 'latest',
-      sourceType: 'commonjs'
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+      }
     },
     rules: {
       'max-len': ['error', { code: 120 }],

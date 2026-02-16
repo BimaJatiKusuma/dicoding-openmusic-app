@@ -79,7 +79,8 @@ class PlaylistRepositories {
     async findSongsInPlaylist(id){
         const query = {
             text: 'SELECT playlist.id, playlist.name, users.username ' +
-                'FROM playlist LEFT JOIN users ON playlist.owner = users.id ' +
+                'FROM playlist ' +
+                'LEFT JOIN users ON playlist.owner = users.id ' +
                 'WHERE playlist.id = $1',
             values: [id]
         }
@@ -92,7 +93,8 @@ class PlaylistRepositories {
 
         const querySongs = {
             text: 'SELECT songs.id, songs.title, songs.performer ' +
-                'FROM songs JOIN playlist_songs ON songs.id = playlist_songs.song_id WHERE playlist_songs.playlist_id = $1',
+                'FROM songs JOIN playlist_songs ON songs.id = playlist_songs.song_id ' +
+                'WHERE playlist_songs.playlist_id = $1',
             values: [id]
         }
 
@@ -153,9 +155,13 @@ class PlaylistRepositories {
 
     async findPlaylistActivities(playlistId){
         const query = {
-            text: 'SELECT users.username, songs.title, playlist_song_activities.action, playlist_song_activities.time ' +
-            'FROM playlist_song_activities JOIN users ON playlist_song_activities.user_id = users.id JOIN songs ON playlist_song_activities.song_id = songs.id ' +
-            'WHERE playlist_song_activities.playlist_id = $1 ORDER BY playlist_song_activities.time ASC',
+            text: 'SELECT users.username, songs.title, playlist_song_activities.action, ' +
+                'playlist_song_activities.time ' +
+                'FROM playlist_song_activities ' +
+                'JOIN users ON playlist_song_activities.user_id = users.id ' +
+                'JOIN songs ON playlist_song_activities.song_id = songs.id ' +
+                'WHERE playlist_song_activities.playlist_id = $1 ' +
+                'ORDER BY playlist_song_activities.time ASC',
             values: [playlistId]
         }
         const result = await this.pool.query(query);
