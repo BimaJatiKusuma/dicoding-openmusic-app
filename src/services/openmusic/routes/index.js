@@ -12,7 +12,6 @@ import {
     songCreatePayloadSchema,
     songUpdatePayloadSchema
 } from "../validator/schema.js";
-import authenticateToken from "../../../middlewares/auth.js";
 
 const router = express.Router();
 

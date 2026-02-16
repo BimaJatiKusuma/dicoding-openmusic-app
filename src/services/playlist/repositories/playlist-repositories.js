@@ -24,11 +24,11 @@ class PlaylistRepositories {
     async findPlaylists(owner){
         const query = {
             text: `SELECT playlist.id, playlist.name, users.username
-            From playlist
-            LEFT JOIN users ON playlist.owner = users.id
-            LEFT JOIN collaborations ON playlist.id = collaborations.playlist_id
-            WHERE playlist.owner = $1 OR collaborations.user_id = $1
-            GROUP BY playlist.id, users.username`,
+                   FROM playlist
+                            LEFT JOIN users ON playlist.owner = users.id
+                            LEFT JOIN collaborations ON playlist.id = collaborations.playlist_id
+                   WHERE playlist.owner = $1 OR collaborations.user_id = $1
+                   GROUP BY playlist.id, users.username`,
             values: [owner]
         }
 

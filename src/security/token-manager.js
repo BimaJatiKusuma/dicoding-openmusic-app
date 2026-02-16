@@ -10,6 +10,7 @@ const TokenManager = {
             const decode = jwt.verify(accessToken, process.env.ACCESS_TOKEN_KEY);
             return decode;
         } catch (error) {
+            console.log(error);
             throw new InvariantError('Access token tidak valid');
         }
     },

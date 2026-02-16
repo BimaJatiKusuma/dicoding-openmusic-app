@@ -1,4 +1,3 @@
-import collaborationService from "../repositories/collaborator-repositories.js";
 import response from "../../../utils/response.js";
 import collaboratorRepositories from "../repositories/collaborator-repositories.js";
 import {InvariantError, NotFoundError} from "../../../exceptions/index.js";
