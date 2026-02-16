@@ -92,11 +92,11 @@ export const findActivitiesPlaylist = async (req, res, next) => {
     try {
         await playlistRepositories.verifyPlaylistAccess(playlistId, credentialId);
 
-        if (isOwner === false) return next(new AuthorizationError('Anda tidak berhak mengakses resource ini'));
+        const activities = await playlistRepositories.findPlaylistActivities(playlistId);
 
         return response(res, 200, 'success', {
             playlistId: playlistId,
-            activities: result
+            activities: activities
         });
     } catch (error) {
         next(error);

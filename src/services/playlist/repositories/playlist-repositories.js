@@ -27,7 +27,8 @@ class PlaylistRepositories {
             From playlist
             LEFT JOIN users ON playlist.owner = users.id
             LEFT JOIN collaborations ON playlist.id = collaborations.playlist_id
-            WHERE playlist.owner = $1 OR collaborations.user_id = $1`,
+            WHERE playlist.owner = $1 OR collaborations.user_id = $1
+            GROUP BY playlist.id, users.username`,
             values: [owner]
         }
 
