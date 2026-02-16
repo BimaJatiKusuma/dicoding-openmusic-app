@@ -8,6 +8,7 @@ import AuthorizationError from "../../../exceptions/authorization-error.js";
 
 export const createCollaboration = async (req, res, next) => {
     const {playlistId, userId} = req.body;
+    const {id: credentialId} = req.user;
 
     try {
         const isOwner = await playlistRepositories.verifyPlaylistOwner(playlistId, userId);
