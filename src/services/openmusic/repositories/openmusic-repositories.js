@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid';
 import { Pool } from 'pg';
 import InvariantError from "../../../exceptions/invariant-error.js";
 import {NotFoundError} from "../../../exceptions/index.js";
+import cacheService from "../../redis/cache-service.js";
 
 class OpenMusicRepositories {
     constructor() {
@@ -20,19 +21,6 @@ class OpenMusicRepositories {
         const result = await this.pool.query(query);
 
         return result.rows[0];
-    }
-
-    async uploadAlbumCover(id, coverUrl) {
-        const query = {
-            text: 'UPDATE albums SET cover = $1 WHERE id = $2 RETURNING id',
-            values: [coverUrl, id]
-        }
-
-        const result = await this.pool.query(query);
-
-        if (!result.rows.length){
-            throw new NotFoundError('Album tidak ditemukan');
-        }
     }
 
     async findAlbumById(id) {
@@ -183,6 +171,17 @@ class OpenMusicRepositories {
     }
 
     async addLike(userId, albumId){
+
+        const checkAlbumQuery = {
+            text: 'SELECT * FROM albums WHERE id = $1',
+            values: [albumId],
+        };
+        const albumResult = await this.pool.query(checkAlbumQuery);
+
+        if (!albumResult.rowCount) {
+            throw new NotFoundError('Album tidak ditemukan');
+        }
+
         const id = `like-${nanoid(16)}`;
         const query = {
             text: 'INSERT INTO user_album_likes VALUES($1, $2, $3) RETURNING id',
@@ -194,6 +193,8 @@ class OpenMusicRepositories {
             if (!result.rows[0].id) {
                 throw new InvariantError('Gagal menambahkan like');
             }
+
+            await cacheService.delete(`likes:${albumId}`);
         } catch (error) {
             if (error.constraint === 'unique_user_album_like') {
                 throw new InvariantError('Anda sudah menyukai album ini');
@@ -212,6 +213,8 @@ class OpenMusicRepositories {
         if (!result.rowCount) {
             throw new InvariantError('Like tidak ditemukan');
         }
+
+        await cacheService.delete(`likes:${albumIb}`);
     }
 
     async checkIsLiked(userId, albumId) {
@@ -224,13 +227,27 @@ class OpenMusicRepositories {
     }
 
     async getLikesCount(albumId) {
-        const query = {
-            text: 'SELECT COUNT(*) FROM user_album_likes WHERE album_id = $1',
-            values: [albumId],
-        };
+        try {
+            const result = await cacheService.get(`likes:${albumId}`);
+            return {
+                likes: parseInt(result, 10),
+                source: 'cache'
+            }
+        } catch (error) {
+            console.log(error);
+            const query = {
+                text: 'SELECT COUNT(*) FROM user_album_likes WHERE album_id = $1',
+                values: [albumId],
+            };
 
-        const result = await this.pool.query(query);
-        return parseInt(result.rows[0].count, 10);
+            const result = await this.pool.query(query);
+            const likes = parseInt(result.rows[0].count, 10);
+
+            await cacheService.set(`likes:${albumId}`, JSON.stringify(likes));
+
+            return { likes };
+        }
+
     }
 }
 

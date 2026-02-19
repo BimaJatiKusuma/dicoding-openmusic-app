@@ -3,7 +3,7 @@ import {
     createAlbum, createSong,
     deleteAlbumById, deleteSong, findAlbumById,
     findSongs, findSongById,
-    updateAlbum, updateSong, postUploadCoverHandler, postLikeHandler, deleteLikeHandler, getLikesHandler
+    updateAlbum, updateSong, postLikeHandler, deleteLikeHandler, getLikesHandler
 } from "../controller/openmusic-controller.js";
 import validate from "../../../middlewares/validate.js";
 import {
@@ -21,7 +21,6 @@ router.get('/albums/:id', findAlbumById);
 router.put('/albums/:id', validate(albumUpdatePayloadSchema), updateAlbum);
 router.delete('/albums/:id', deleteAlbumById);
 
-router.post('/albums/:id/covers', postUploadCoverHandler);
 router.post('/albums/:id/likes', authenticateToken, postLikeHandler);
 router.delete('/albums/:id/likes', authenticateToken, deleteLikeHandler);
 router.get('/albums/:id/likes', getLikesHandler);
