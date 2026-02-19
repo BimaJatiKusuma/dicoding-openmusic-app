@@ -105,7 +105,6 @@ class PlaylistRepositories {
         return {
             id: playlist.id,
             name: playlist.name,
-            username: playlist.username,
             songs: resultSongs.rows
         };
     };

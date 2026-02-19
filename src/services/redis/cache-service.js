@@ -5,12 +5,12 @@ class CacheService {
     constructor() {
         this.client = redis.createClient({
             socket: {
-                host: config.valkey.host,
+                host: config.redis.host,
             }
         });
 
         this.client.on('error', (error) => {
-            console.error('Valkey Error: ', error);
+            console.error('Redis Error: ', error);
         })
 
         this.client.connect();

@@ -1,9 +1,9 @@
 import response from "../../../utils/response.js";
 import openMusicRepositories from "../repositories/openmusic-repositories.js";
-import cacheService from "../../valkey/cache-service.js";
+import cacheService from "../../redis/cache-service.js";
 import {InvariantError} from "../../../exceptions/index.js";
 import NotFoundError from "../../../exceptions/not-found-error.js";
-import req from "express/lib/request.js";
+import config from "../../../utils/config.js";
 
 //Album Controller
 export const createAlbum = async (req, res, next) => {
@@ -46,6 +46,26 @@ export const deleteAlbumById = async (req, res, next) => {
     }
 
     return response(res, 200, 'Album berhasil dihapus', deletedAlbum);
+}
+
+export const postUploadCoverHandler = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        if (!req.file) {
+            return next(new InvariantError('Gagal mengupload cover album. Pastikan format dan ukuran sesuai.'));
+        }
+
+        const { filename } = req.file;
+
+        const coverUrl = `http://${config.app.host}:${config.app.port}/albums/images/${filename}`;
+
+        await openMusicRepositories.uploadAlbumCover(id, coverUrl);
+
+        return response(res, 201, 'Sampul berhasil diunggah');
+    } catch (error) {
+        next(error);
+    }
 }
 
 // Song Controller
@@ -92,60 +112,47 @@ export const deleteSong = async (req, res, next) => {
     return response(res, 200, 'Lagu berhasil dihapus', deletedSong);
 }
 
-export const postLikeHandler = async (req, res) => {
-    const {id: albumId } = req.params;
-    const {id: credentialId} = req.user;
 
-    await openMusicRepositories.findAlbumById(albumId);
-    await openMusicRepositories.addLike(credentialId, albumId);
+//LIKES HANDLER
+export const postLikeHandler = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { id: credentialId } = req.user;
 
-    await cacheService.delete(`likes:${albumId}`);
+        await openMusicRepositories.addLike(id, credentialId);
 
-    const response = h.response({
-        status: 'success',
-        message: 'Berhasil menambahkan like'
-    });
-    response.code = 200;
-    return response;
-}
-
-export const deleteLikeHandler = async (req, res) => {
-    const { id: albumId } = req.params;
-    const { id: credentialId } = req.user;
-
-    await openMusicRepositories.deleteLike(credentialId, albumId);
-
-    await cacheService.delete(`likes:${albumId}`);
-
-    return {
-        status: 'success',
-        message: 'Batal menyukai album',
+        return response(res, 201, 'Berhasil menyukai album');
+    } catch (error) {
+        next(error);
     }
 }
 
-export const getLikesHandler = async (req, res) => {
-    const { id: albumId } = req.params;
-
+export const deleteLikeHandler = async (req, res, next) => {
     try {
-        const result = await cacheService.get(`likes:${albumId}`);
-        const likes = JSON.parse(result);
+        const { id } = req.params;
+        const { id: credentialId } = req.user;
 
-        const response = h.response({
-            status: 'success',
-            data: { likes },
-        });
+        await openMusicRepositories.deleteLike(id, credentialId);
 
-        response.header('X-Data-Source', 'cache');
-        return response;
-    } catch {
-        const likes = await openMusicRepositories.getLikesCount(albumId);
+        return response(res, 200, 'Berhasil batal menyukai album');
+    } catch (error) {
+        next(error);
+    }
+}
 
-        await cacheService.set(`likes:${albumId}`, JSON.stringify(likes), 60 * 30);
+export const getLikesHandler = async (req, res, next) => {
+    try {
+        const { id } = req.params;
 
-        return {
-            status: 'success',
-            data: { likes },
+        const { likes, source } = await openMusicRepositories.getLikesCount(id);
+
+        if (source === 'cache') {
+            res.setHeader('X-Data-Source', 'cache');
         }
+
+        return response(res, 200, 'Berhasil mendapatkan likes', { likes: parseInt(likes) });
+    } catch (error) {
+        next(error);
     }
 }
 

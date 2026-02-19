@@ -12,8 +12,8 @@ const config = {
     rabbitMq: {
         server: process.env.RABBITMQ_SERVER,
     },
-    valkey: {
-        host: process.env.VALKEY_HOST,
+    redis: {
+        host: process.env.REDIS_HOST,
     }
 }
 

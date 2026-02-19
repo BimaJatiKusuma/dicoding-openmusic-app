@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid';
 import { Pool } from 'pg';
 import InvariantError from "../../../exceptions/invariant-error.js";
+import {NotFoundError} from "../../../exceptions/index.js";
 
 class OpenMusicRepositories {
     constructor() {
@@ -21,9 +22,22 @@ class OpenMusicRepositories {
         return result.rows[0];
     }
 
+    async uploadAlbumCover(id, coverUrl) {
+        const query = {
+            text: 'UPDATE albums SET cover = $1 WHERE id = $2 RETURNING id',
+            values: [coverUrl, id]
+        }
+
+        const result = await this.pool.query(query);
+
+        if (!result.rows.length){
+            throw new NotFoundError('Album tidak ditemukan');
+        }
+    }
+
     async findAlbumById(id) {
         const query = {
-            text: 'SELECT a.id, a.name, a.year, s.id as song_id, s.title, s.performer ' +
+            text: 'SELECT a.id, a.name, a.year, a.cover, s.id as song_id, s.title, s.performer ' +
                 'FROM albums a LEFT JOIN songs s ON s.album_id = a.id WHERE a.id = $1',
             values: [id]
         };
@@ -38,6 +52,7 @@ class OpenMusicRepositories {
             id: result.rows[0].id,
             name: result.rows[0].name,
             year: result.rows[0].year,
+            coverUrl: result.rows[0].cover,
             songs: [],
         }
 
@@ -62,6 +77,19 @@ class OpenMusicRepositories {
 
         const result = await this.pool.query(query);
         return result.rows[0];
+    }
+
+    async editAlbumCover(id, coverUrl){
+        const query = {
+            text: 'UPDATE albums SET cover = $1 WHERE id = $2 RETURNING id',
+            values: [coverUrl, id]
+        }
+
+        const result = await this.pool.query(query);
+
+        if(!result.rows.length) {
+            throw new NotFoundError('Album tidak ditemukan');
+        }
     }
 
     async deleteAlbumById(id) {
