@@ -4,6 +4,8 @@ import cacheService from "../../redis/cache-service.js";
 import {InvariantError} from "../../../exceptions/index.js";
 import NotFoundError from "../../../exceptions/not-found-error.js";
 import config from "../../../utils/config.js";
+import multer from "multer";
+import path from "path";
 
 //Album Controller
 export const createAlbum = async (req, res, next) => {
@@ -49,6 +51,48 @@ export const deleteAlbumById = async (req, res, next) => {
 }
 
 export const postUploadCoverHandler = async (req, res, next) => {
+    const storage = multer.diskStorage({
+        destination: function (req, file, cb) {
+            cb(null, 'src/services/storage/file/images');
+        },
+        filename: function (req, file, cb) {
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            cb(null, uniqueSuffix + '-' + path.extname(file.originalname))
+        }
+    })
+
+    const upload = multer ({
+        storage: storage,
+        limits: { fileSize: 512000 },
+        fileFilter: (req, file, cb) => {
+            if (file.mimetype.startsWith('image/')) {
+                cb(null, true);
+            } else {
+                cb(new Error('File harus berupa gambar'), false);
+            }
+        }
+    })
+
+    const uploadCover = (req, res, next) => {
+        const singleUpload = upload.single('cover');
+
+        singleUpload(req, res, (err) => {
+            if (err) {
+                if (err.code === 'LIMIT_FILE_SIZE') {
+                    return res.status(413).json({
+                        status: 'fail',
+                        message: 'Ukuran payload terlalu besar'
+                    });
+                }
+                return res.status(400).json({
+                    status: 'fail',
+                    message: err.message
+                });
+            }
+            next();
+        })
+    }
+
     try {
         const { id } = req.params;
 
