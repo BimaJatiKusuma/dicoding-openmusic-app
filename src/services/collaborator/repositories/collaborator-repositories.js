@@ -1,5 +1,6 @@
 import {nanoid} from "nanoid";
 import {Pool} from "pg";
+import cacheService from "../../redis/cache-service.js";
 
 class CollaboratorRepositories {
     constructor() {
@@ -15,6 +16,8 @@ class CollaboratorRepositories {
 
         const result = await this.pool.query(query);
 
+        await cacheService.delete(`user_playlists:${userId}`);
+
         return result.rows[0];
     }
 
@@ -28,6 +31,8 @@ class CollaboratorRepositories {
         if (result.rowCount === 0) {
             return null;
         }
+
+        await cacheService.delete(`user_playlists:${userId}`);
 
         return result.rows[0];
     }

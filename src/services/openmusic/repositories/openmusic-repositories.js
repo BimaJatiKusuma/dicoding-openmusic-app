@@ -23,7 +23,11 @@ class OpenMusicRepositories {
         return result.rows[0];
     }
 
-    async findAlbumById(id) {
+async findAlbumById(id) {
+    try {
+            const result = await cacheService.get(`album:${id}`);
+            return JSON.parse(result);
+        } catch (error) {
         const query = {
             text: 'SELECT a.id, a.name, a.year, a.cover, s.id as song_id, s.title, s.performer ' +
                 'FROM albums a LEFT JOIN songs s ON s.album_id = a.id WHERE a.id = $1',
@@ -54,8 +58,12 @@ class OpenMusicRepositories {
             }
         });
 
+        await cacheService.set(`album:${id}`, JSON.stringify(album));
+
         return album;
-    }
+        }
+
+}
 
     async updateAlbumById({ id, name, year }) {
         const query = {
@@ -64,6 +72,7 @@ class OpenMusicRepositories {
         };
 
         const result = await this.pool.query(query);
+        await cacheService.delete(`album:${id}`);
         return result.rows[0];
     }
 
@@ -78,6 +87,8 @@ class OpenMusicRepositories {
         if(!result.rows.length) {
             throw new NotFoundError('Album tidak ditemukan');
         }
+
+        await cacheService.delete(`album:${id}`);
     }
 
     async deleteAlbumById(id) {
@@ -92,6 +103,8 @@ class OpenMusicRepositories {
             return null;
         }
 
+        await cacheService.delete(`album:${id}`);
+
         return result.rows[0].id;
     }
 
@@ -105,6 +118,10 @@ class OpenMusicRepositories {
         };
 
         const result = await this.pool.query(query);
+
+        if (albumId) {
+            await cacheService.delete(`album:${albumId}`);
+        }
         return result.rows[0];
     }
 
@@ -145,6 +162,12 @@ class OpenMusicRepositories {
     }
 
     async updateSong({id, album_id, title, year, genre, performer, duration}) {
+        const oldSongQuery = {
+            text: 'SELECT album_id FROM songs WHERE id = $1',
+            values: [id]
+        }
+        const oldSongResult = await this.pool.query(oldSongQuery);
+
         const query = {
             text: 'UPDATE songs SET album_id = $1, title = $2, year = $3, genre = $4, performer = $5, duration = $6 ' +
                 'WHERE id = $7 RETURNING *',
@@ -152,12 +175,21 @@ class OpenMusicRepositories {
         }
 
         const result = await this.pool.query(query);
+
+        if (oldSongResult.rowCount > 0 && oldSongResult.rows[0].album_id) {
+            await cacheService.delete(`album:${oldSongResult.rows[0].album_id}`);
+        }
+
+        if (album_id) {
+            await cacheService.delete(`album:${album_id}`);
+        }
+
         return result.rows[0];
     }
 
     async deleteSong(id) {
         const query = {
-            text: 'DELETE FROM songs WHERE id = $1 RETURNING id',
+            text: 'DELETE FROM songs WHERE id = $1 RETURNING id, album_id',
             values: [id]
         };
 
@@ -167,7 +199,12 @@ class OpenMusicRepositories {
             return null;
         }
 
-        return result.rows[0].id;
+        const {id: deletedId, album_id } = result.rows[0];
+        if (album_id) {
+            await cacheService.delete(`album:${album_id}`);
+        }
+
+        return deletedId;
     }
 
     async addLike(userId, albumId){
