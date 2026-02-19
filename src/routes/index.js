@@ -4,6 +4,7 @@ import usersRoutes from '../services/users/routes/index.js';
 import authentications from '../services/authentications/routes/index.js';
 import playlistsRoutes from '../services/playlist/routes/index.js';
 import collaborationsRoutes from '../services/collaborator/routes/index.js';
+import exports from '../services/exports/routes/index.js';
 
 const router = Router();
 
@@ -12,5 +13,6 @@ router.use('/users', usersRoutes);
 router.use('/authentications', authentications);
 router.use('/playlists', playlistsRoutes);
 router.use('/collaborations', collaborationsRoutes);
+router.use('/export', exports);
 
 export default router;

@@ -1,7 +1,9 @@
 import response from "../../../utils/response.js";
 import openMusicRepositories from "../repositories/openmusic-repositories.js";
+import cacheService from "../../valkey/cache-service.js";
 import {InvariantError} from "../../../exceptions/index.js";
 import NotFoundError from "../../../exceptions/not-found-error.js";
+import req from "express/lib/request.js";
 
 //Album Controller
 export const createAlbum = async (req, res, next) => {
@@ -88,6 +90,63 @@ export const deleteSong = async (req, res, next) => {
         return next(new NotFoundError('Lagu tidak ditemukan'));
     }
     return response(res, 200, 'Lagu berhasil dihapus', deletedSong);
+}
+
+export const postLikeHandler = async (req, res) => {
+    const {id: albumId } = req.params;
+    const {id: credentialId} = req.user;
+
+    await openMusicRepositories.findAlbumById(albumId);
+    await openMusicRepositories.addLike(credentialId, albumId);
+
+    await cacheService.delete(`likes:${albumId}`);
+
+    const response = h.response({
+        status: 'success',
+        message: 'Berhasil menambahkan like'
+    });
+    response.code = 200;
+    return response;
+}
+
+export const deleteLikeHandler = async (req, res) => {
+    const { id: albumId } = req.params;
+    const { id: credentialId } = req.user;
+
+    await openMusicRepositories.deleteLike(credentialId, albumId);
+
+    await cacheService.delete(`likes:${albumId}`);
+
+    return {
+        status: 'success',
+        message: 'Batal menyukai album',
+    }
+}
+
+export const getLikesHandler = async (req, res) => {
+    const { id: albumId } = req.params;
+
+    try {
+        const result = await cacheService.get(`likes:${albumId}`);
+        const likes = JSON.parse(result);
+
+        const response = h.response({
+            status: 'success',
+            data: { likes },
+        });
+
+        response.header('X-Data-Source', 'cache');
+        return response;
+    } catch {
+        const likes = await openMusicRepositories.getLikesCount(albumId);
+
+        await cacheService.set(`likes:${albumId}`, JSON.stringify(likes), 60 * 30);
+
+        return {
+            status: 'success',
+            data: { likes },
+        }
+    }
 }
 
 // Search Song
