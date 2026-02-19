@@ -1,6 +1,6 @@
 import ClientError from '../../../exceptions/client-error.js';
 import response from "../../../utils/response.js";
-import openmusicRepositories from "../../openmusic/repositories/openmusic-repositories.js";
+import openMusicRepositories from "../../openmusic/repositories/openmusic-repositories.js";
 
 export const uploadImages = async (req, res, next) => {
     try {
