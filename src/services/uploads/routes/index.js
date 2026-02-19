@@ -4,6 +4,6 @@ import { upload } from '../storage/storage-config.js';
 
 const router = Router();
 
-router.post('/albums/:id/covers', upload.single('image'), uploadImages);
+router.post('/albums/:id/covers', upload.single('cover'), uploadImages);
 
 export default router;
