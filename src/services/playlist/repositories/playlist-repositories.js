@@ -28,7 +28,7 @@ class PlaylistRepositories {
         try {
             const result = await cacheService.get(`user_playlists:${owner}`);
             return JSON.parse(result);
-        } catch (error) {
+        } catch {
             const query = {
                 text: `SELECT playlist.id, playlist.name, users.username
                    FROM playlist
@@ -98,7 +98,7 @@ class PlaylistRepositories {
         try {
             const result = await cacheService.get(`playlist_songs:${id}`);
             return JSON.parse(result);
-        } catch (error) {
+        } catch {
             const query = {
                 text: 'SELECT playlist.id, playlist.name, users.username ' +
                     'FROM playlist ' +
@@ -187,7 +187,7 @@ class PlaylistRepositories {
         try {
             const result = await cacheService.get(`playlist_activities:${playlistId}`);
             return JSON.parse(result);
-        } catch (error) {
+        } catch {
             const query = {
                 text: 'SELECT users.username, songs.title, playlist_song_activities.action, ' +
                     'playlist_song_activities.time ' +

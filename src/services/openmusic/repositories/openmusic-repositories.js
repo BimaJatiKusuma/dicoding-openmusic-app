@@ -27,7 +27,7 @@ async findAlbumById(id) {
     try {
             const result = await cacheService.get(`album:${id}`);
             return JSON.parse(result);
-        } catch (error) {
+        } catch {
         const query = {
             text: 'SELECT a.id, a.name, a.year, a.cover, s.id as song_id, s.title, s.performer ' +
                 'FROM albums a LEFT JOIN songs s ON s.album_id = a.id WHERE a.id = $1',
@@ -270,8 +270,7 @@ async findAlbumById(id) {
                 likes: parseInt(result, 10),
                 source: 'cache'
             }
-        } catch (error) {
-            console.log(error);
+        } catch {
             const query = {
                 text: 'SELECT COUNT(*) FROM user_album_likes WHERE album_id = $1',
                 values: [albumId],
