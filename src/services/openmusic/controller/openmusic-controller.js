@@ -50,20 +50,23 @@ export const deleteAlbumById = async (req, res, next) => {
     return response(res, 200, 'Album berhasil dihapus', deletedAlbum);
 }
 
-export const postUploadCoverHandler = async (req, res, next) => {
+export const postUploadCoverHandler = (req, res, next) => {
+    // 1. Konfigurasi penyimpanan
     const storage = multer.diskStorage({
         destination: function (req, file, cb) {
             cb(null, 'src/services/storage/file/images');
         },
         filename: function (req, file, cb) {
             const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-            cb(null, uniqueSuffix + '-' + path.extname(file.originalname))
+            // Hapus tanda '-' sebelum path.extname karena extname sudah membawa '.'
+            cb(null, uniqueSuffix + path.extname(file.originalname));
         }
-    })
+    });
 
-    const upload = multer ({
+    // 2. Konfigurasi multer
+    const upload = multer({
         storage: storage,
-        limits: { fileSize: 512000 },
+        limits: { fileSize: 512000 }, // Batas ukuran file 512KB
         fileFilter: (req, file, cb) => {
             if (file.mimetype.startsWith('image/')) {
                 cb(null, true);
@@ -71,47 +74,47 @@ export const postUploadCoverHandler = async (req, res, next) => {
                 cb(new Error('File harus berupa gambar'), false);
             }
         }
-    })
+    });
 
-    const uploadCover = (req, res, next) => {
-        const singleUpload = upload.single('cover');
+    const singleUpload = upload.single('cover');
 
-        singleUpload(req, res, (err) => {
-            if (err) {
-                if (err.code === 'LIMIT_FILE_SIZE') {
-                    return res.status(413).json({
-                        status: 'fail',
-                        message: 'Ukuran payload terlalu besar'
-                    });
-                }
-                return res.status(400).json({
+    // 3. Eksekusi proses upload secara langsung
+    singleUpload(req, res, async (err) => {
+        // Penanganan error dari multer (termasuk 413 Payload Too Large)
+        if (err) {
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                return res.status(413).json({
                     status: 'fail',
-                    message: err.message
+                    message: 'Ukuran payload terlalu besar'
                 });
             }
-            next();
-        })
-    }
-
-    try {
-        const { id } = req.params;
-
-        if (!req.file) {
-            return next(new InvariantError('Gagal mengupload cover album. Pastikan format dan ukuran sesuai.'));
+            return res.status(400).json({
+                status: 'fail',
+                message: err.message
+            });
         }
 
-        const { filename } = req.file;
+        // 4. Setelah multer berhasil memproses file, jalankan logika database
+        try {
+            const { id } = req.params;
 
-        const coverUrl = `http://${config.app.host}:${config.app.port}/albums/images/${filename}`;
+            // Jika tidak ada file yang diupload (selain masalah ukuran/format)
+            if (!req.file) {
+                return next(new InvariantError('Gagal mengupload cover album. Pastikan format dan ukuran sesuai.'));
+            }
 
-        await openMusicRepositories.uploadAlbumCover(id, coverUrl);
+            const { filename } = req.file;
+            const coverUrl = `http://${config.app.host}:${config.app.port}/albums/images/${filename}`;
 
-        return response(res, 201, 'Sampul berhasil diunggah');
-    } catch (error) {
-        next(error);
-    }
-}
+            // Simpan ke database
+            await openMusicRepositories.uploadAlbumCover(id, coverUrl);
 
+            return response(res, 201, 'Sampul berhasil diunggah');
+        } catch (error) {
+            next(error);
+        }
+    });
+};
 // Song Controller
 export const createSong = async (req, res, next) => {
     const { albumId, title, year, genre, performer, duration } = req.validated;

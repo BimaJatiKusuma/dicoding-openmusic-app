@@ -21,7 +21,7 @@ router.get('/albums/:id', findAlbumById);
 router.put('/albums/:id', validate(albumUpdatePayloadSchema), updateAlbum);
 router.delete('/albums/:id', deleteAlbumById);
 
-router.post('/albums/:id/covers', authenticateToken, postUploadCoverHandler);
+router.post('/albums/:id/covers', postUploadCoverHandler);
 router.post('/albums/:id/likes', authenticateToken, postLikeHandler);
 router.delete('/albums/:id/likes', authenticateToken, deleteLikeHandler);
 router.get('/albums/:id/likes', getLikesHandler);
